@@ -1,0 +1,16 @@
+{
+    "description": "Impot sur les Traitements et Salaires (ITS) - Cote d'Ivoire 2026",
+    "abattement_standard_pct": 20,
+    "tranches": [
+        {"min": 0, "max": 150000, "taux": 0, "description": "Exonere"},
+        {"min": 150001, "max": 300000, "taux": 10, "description": "Tranche 1"},
+        {"min": 300001, "max": 500000, "taux": 15, "description": "Tranche 2"},
+        {"min": 500001, "max": 1000000, "taux": 30, "description": "Tranche 3"},
+        {"min": 1000001, "max": 3000000, "taux": 32, "description": "Tranche 4"},
+        {"min": 3000001, "max": null, "taux": 32, "description": "Tranche 5"}
+    ],
+    "credits": {
+        "part_fiscale": 5500,
+        "description": "Credit par part fiscale (demi-part)"
+    }
+}

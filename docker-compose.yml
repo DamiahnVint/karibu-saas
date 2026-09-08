@@ -1,0 +1,100 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: karibu-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - karibu-network
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: karibu-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - karibu-network
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: karibu-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-karibu_software}
+      MYSQL_USER: ${DB_USERNAME:-karibu}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - karibu-mysql-data:/var/lib/mysql
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - karibu-network
+
+  redis:
+    image: redis:alpine
+    container_name: karibu-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - karibu-redis-data:/data
+    networks:
+      - karibu-network
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: karibu-queue
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - .:/var/www
+    networks:
+      - karibu-network
+    depends_on:
+      - app
+      - mysql
+      - redis
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: karibu-scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www
+    networks:
+      - karibu-network
+    depends_on:
+      - app
+      - mysql
+      - redis
+
+networks:
+  karibu-network:
+    driver: bridge
+
+volumes:
+  karibu-mysql-data:
+  karibu-redis-data:

@@ -1,0 +1,31 @@
+{
+    "retraite": {
+        "taux_employeur": 7.70,
+        "taux_salarie": 6.30,
+        "plafond_mensuel": 3375000,
+        "description": "Assurance Vieillesse"
+    },
+    "maternite": {
+        "taux_employeur": 0.75,
+        "plafond_mensuel": 70000,
+        "description": "Assurance Maternite"
+    },
+    "prestations_familiales": {
+        "taux_employeur": 5.00,
+        "plafond_mensuel": 70000,
+        "description": "Prestations Familiales"
+    },
+    "accidents_travail": {
+        "taux_employeur_min": 2.00,
+        "taux_employeur_max": 5.00,
+        "plafond_mensuel": 70000,
+        "description": "Accidents du Travail et Maladies Professionnelles",
+        "default_taux": 2.50
+    },
+    "cmu": {
+        "montant_mensuel": 1000,
+        "part_employeur": 500,
+        "part_salarie": 500,
+        "description": "Couverture Maladie Universelle"
+    }
+}
