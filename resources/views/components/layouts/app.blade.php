@@ -58,7 +58,7 @@
     {{-- SIDEBAR --}}
     <aside
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto flex flex-col"
+        class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:translate-x-0 flex flex-col"
     >
         {{-- Logo --}}
         <div class="flex items-center gap-3 px-5 h-16 border-b border-gray-100 flex-shrink-0">
