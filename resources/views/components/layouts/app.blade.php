@@ -30,11 +30,25 @@
         }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        * { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
-        .sidebar-link { @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200; }
-        .sidebar-link-active { @apply bg-royal-600 text-white shadow-lg shadow-royal-600/25; }
-        .sidebar-link-default { @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900; }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-size: 0.875rem; font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .sidebar-link-active {
+            background-color: #1e5fa8; color: #fff;
+            box-shadow: 0 10px 15px -3px rgba(30, 95, 168, 0.25);
+        }
+        .sidebar-link-default { color: #4b5563; }
+        .sidebar-link-default:hover {
+            background-color: #f3f4f6; color: #111827;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-50" x-data="{ sidebarOpen: false, sidebarDesktop: true }">
