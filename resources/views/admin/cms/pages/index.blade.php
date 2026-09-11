@@ -1,11 +1,11 @@
 <x-layouts.app title="CMS — Pages">
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ showModal: false }">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-black text-gray-900">Pages du site</h1>
                 <p class="text-gray-500 text-sm mt-1">Gérez les pages et sections de votre site</p>
             </div>
-            <x-ui.button onclick="document.getElementById('createPageModal').classList.remove('hidden')">
+            <x-ui.button @click="showModal = true">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Nouvelle page
             </x-ui.button>
@@ -57,24 +57,24 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
-    {{-- Modal création --}}
-    <div id="createPageModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" x-data="{ open: true }" x-show="open" x-transition>
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl" @click.outside="$el.closest('.hidden')?.classList.add('hidden')">
-            <h2 class="text-xl font-bold text-gray-900 mb-1">Nouvelle page</h2>
-            <p class="text-sm text-gray-500 mb-6">Ajoutez une nouvelle page à votre site</p>
-            <form method="POST" action="{{ route('admin.cms.pages.store') }}">
-                @csrf
-                <div class="space-y-4">
-                    <x-ui.input name="title" label="Titre" placeholder="Accueil, Services, À propos..." :required="true" />
-                    <x-ui.input name="slug" label="Slug (auto-généré si vide)" placeholder="mon-url" />
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="document.getElementById('createPageModal').classList.add('hidden')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition">Annuler</button>
-                    <x-ui.button type="submit" class="flex-1">Créer</x-ui.button>
-                </div>
-            </form>
+        {{-- Modal création page --}}
+        <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style="display:none;" @keydown.escape.window="showModal = false">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl" x-show="showModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" @click.outside="showModal = false">
+                <h2 class="text-xl font-bold text-gray-900 mb-1">Nouvelle page</h2>
+                <p class="text-sm text-gray-500 mb-6">Ajoutez une nouvelle page à votre site</p>
+                <form method="POST" action="{{ route('admin.cms.pages.store') }}">
+                    @csrf
+                    <div class="space-y-4">
+                        <x-ui.input name="title" label="Titre" placeholder="Accueil, Services, À propos..." :required="true" />
+                        <x-ui.input name="slug" label="Slug (auto-généré si vide)" placeholder="mon-url" />
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" @click="showModal = false" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition">Annuler</button>
+                        <x-ui.button type="submit" class="flex-1">Créer</x-ui.button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </x-layouts.app>

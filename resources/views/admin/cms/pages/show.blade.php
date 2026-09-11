@@ -1,5 +1,5 @@
 <x-layouts.app title="CMS — Éditer {{ $page->title }}">
-    <div class="max-w-5xl space-y-6">
+    <div class="max-w-5xl space-y-6" x-data="jsonEditor()">
         <div>
             <a href="{{ route('admin.cms.pages.index') }}" class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-royal-600 transition-colors mb-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -79,10 +79,10 @@
                                 </x-ui.badge>
                             </div>
                         </div>
-                        <form method="POST" action="{{ route('admin.cms.pages.sections.update', [$page, $section]) }}">
+                        <form id="section-form-{{ $section->id }}" method="POST" action="{{ route('admin.cms.pages.sections.update', [$page, $section]) }}">
                             @csrf
                             @method('PUT')
-                            <input type="hidden" name="content" value="{{ json_encode($section->content) }}">
+                            <input type="hidden" name="content" id="section-content-{{ $section->id }}" value="{{ json_encode($section->content) }}">
                             <input type="hidden" name="title" value="{{ $section->title }}">
                             <input type="hidden" name="is_active" value="{{ $section->is_active ? 1 : 0 }}">
                             <input type="hidden" name="sort_order" value="{{ $section->sort_order }}">
@@ -99,7 +99,11 @@
                                     {{ json_encode(array_keys($section->content)) }}
                                 @endif
                             </div>
-                            <button type="button" onclick="this.closest('form').querySelector('[name=content]').value=JSON.stringify(JSON.parse(this.closest('form').querySelector('[name=content]').value))" class="text-royal-600 hover:text-royal-800 text-sm font-semibold transition-colors">Éditer le JSON</button>
+                            <button type="button"
+                                @click="openEditor({{ $section->id }}, `{{ json_encode($section->content) }}`)"
+                                class="text-royal-600 hover:text-royal-800 text-sm font-semibold transition-colors">
+                                Éditer le JSON
+                            </button>
                         </form>
                         <div class="flex gap-3 mt-3 pt-3 border-t border-gray-50">
                             <form method="POST" action="{{ route('admin.cms.pages.sections.update', [$page, $section]) }}">
@@ -127,5 +131,130 @@
                 @endforelse
             </div>
         </div>
+
+        {{-- Modal éditeur JSON --}}
+        <div x-show="editorOpen" x-transition.opacity class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style="display:none;" @keydown.escape.window="closeEditor()">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col" x-show="editorOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" @click.outside="closeEditor()">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="font-bold text-gray-900">Éditer le JSON</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Section #<span x-text="editorSectionId"></span> — Modifiez le contenu puis sauvegardez</p>
+                    </div>
+                    <button @click="closeEditor()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-hidden p-6">
+                    <textarea x-ref="jsonTextarea"
+                        x-model="editorContent"
+                        @input="validateJson()"
+                        class="w-full h-full min-h-[400px] rounded-xl border-gray-200 bg-gray-900 text-green-400 font-mono text-sm p-4 focus:border-royal-500 focus:ring-2 focus:ring-royal-500/20 resize-none"
+                        spellcheck="false"
+                        @keydown.tab.prevent="insertTab($event)"></textarea>
+                </div>
+                <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+                    <div>
+                        <span x-show="editorError" class="text-red-500 text-sm font-medium" x-text="editorError"></span>
+                        <span x-show="!editorError" class="text-green-600 text-sm font-medium">JSON valide</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="formatJson()" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition">
+                            Formater
+                        </button>
+                        <button @click="closeEditor()" type="button" class="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                            Annuler
+                        </button>
+                        <button @click="saveEditor()" type="button" class="px-5 py-2 text-sm font-semibold text-white bg-royal-600 rounded-xl hover:bg-royal-700 transition shadow-sm">
+                            Sauvegarder
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function jsonEditor() {
+            return {
+                editorOpen: false,
+                editorSectionId: null,
+                editorContent: '',
+                editorError: '',
+                editorFormId: null,
+
+                openEditor(sectionId, content) {
+                    this.editorSectionId = sectionId;
+                    this.editorFormId = 'section-form-' + sectionId;
+                    try {
+                        const parsed = JSON.parse(content);
+                        this.editorContent = JSON.stringify(parsed, null, 2);
+                    } catch (e) {
+                        this.editorContent = content;
+                    }
+                    this.editorError = '';
+                    this.editorOpen = true;
+                    this.$nextTick(() => {
+                        if (this.$refs.jsonTextarea) {
+                            this.$refs.jsonTextarea.focus();
+                        }
+                    });
+                    this.validateJson();
+                },
+
+                closeEditor() {
+                    this.editorOpen = false;
+                    this.editorSectionId = null;
+                    this.editorContent = '';
+                    this.editorError = '';
+                },
+
+                validateJson() {
+                    try {
+                        JSON.parse(this.editorContent);
+                        this.editorError = '';
+                    } catch (e) {
+                        this.editorError = e.message;
+                    }
+                },
+
+                formatJson() {
+                    try {
+                        const parsed = JSON.parse(this.editorContent);
+                        this.editorContent = JSON.stringify(parsed, null, 2);
+                        this.editorError = '';
+                    } catch (e) {
+                        this.editorError = 'Impossible de formater : ' + e.message;
+                    }
+                },
+
+                saveEditor() {
+                    try {
+                        const parsed = JSON.parse(this.editorContent);
+                        const input = document.getElementById('section-content-' + this.editorSectionId);
+                        if (input) {
+                            input.value = JSON.stringify(parsed);
+                        }
+                        const form = document.getElementById(this.editorFormId);
+                        if (form) {
+                            form.submit();
+                        }
+                        this.closeEditor();
+                    } catch (e) {
+                        this.editorError = 'JSON invalide : ' + e.message;
+                    }
+                },
+
+                insertTab(event) {
+                    const textarea = event.target;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    this.editorContent = this.editorContent.substring(0, start) + '    ' + this.editorContent.substring(end);
+                    this.$nextTick(() => {
+                        textarea.selectionStart = textarea.selectionEnd = start + 4;
+                    });
+                    this.validateJson();
+                }
+            }
+        }
+    </script>
 </x-layouts.app>
