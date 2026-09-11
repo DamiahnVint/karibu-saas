@@ -1,6 +1,5 @@
-const CACHE_NAME = 'karibu-paie-v1';
-const STATIC_CACHE = 'karibu-static-v1';
-const DYNAMIC_CACHE = 'karibu-dynamic-v1';
+const STATIC_CACHE = 'karibu-static-v2';
+const DYNAMIC_CACHE = 'karibu-dynamic-v2';
 
 const STATIC_ASSETS = [
     '/',
@@ -10,6 +9,7 @@ const STATIC_ASSETS = [
     '/icons/icon-512.png',
     '/icons/icon-maskable.png',
     '/favicon.ico',
+    '/favicon.svg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,21 +39,16 @@ self.addEventListener('fetch', (event) => {
 
     if (request.method !== 'GET') return;
 
-    if (request.url.includes('/api/') || request.url.includes('/orion/')) {
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/orion/') || url.pathname === '/dashboard' || url.pathname.startsWith('/admin')) {
         event.respondWith(
-            fetch(request)
-                .then((response) => {
-                    if (response.ok) {
-                        const clone = response.clone();
-                        caches.open(DYNAMIC_CACHE).then((cache) => {
-                            cache.put(request, clone);
-                        });
-                    }
-                    return response;
-                })
-                .catch(() => {
-                    return caches.match(request);
-                })
+            fetch(request).catch(() => {
+                return new Response('Veuillez vous reconnecter.', {
+                    status: 408,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                });
+            })
         );
         return;
     }

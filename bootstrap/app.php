@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscription' => \App\Http\Middleware\VerifySubscription::class,
         ]);
 
+        $middleware->append(\App\Http\Middleware\PreventBrowserCache::class);
+
         $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
