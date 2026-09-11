@@ -22,12 +22,14 @@ Karibu Technologies est un groupe technologique fonde par BRYCE, base a Abidjan,
 - **Cache** : Redis
 - **Conteneurs** : Docker Compose (6 services)
 - **VPS** : Contabo Cloud VPS Plus 6 (6 CPU, 12GB RAM, 300GB, IP 169.58.220.27)
+- **Mobile** : Flutter/Dart (API Sanctum) — Phase 2
+- **CI/CD** : GitHub Actions (deploy.yml) — Push to main → SSH VPS auto-deploy
 
 ### Architecture
-- **Clean Architecture / Hexagonal** : `src/Features/{Auth,Tenancy,Common}/`
+- **Clean Architecture / Hexagonal** : `src/Features/{Auth,Tenancy,Cms,Common}/`
 - **Multi-tenancy** : Shared Database + tenant_id (row-level tenancy)
 - **Roles SaaS** : super_admin, tenant_owner, tenant_admin, tenant_manager, tenant_user
-- **Plans** : trial (14j, 5 emp), essentiel (20K/mo, 15 emp), professionnel (35K/mo, 50 emp), enterprise (sur mesure)
+- **Plans** : trial (15j, 5 emp), essentiel (20K/mo, 15 emp), professionnel (35K/mo, 50 emp), enterprise (sur mesure)
 - **Namespace** : `Src\` → `src/` (PSR-4 autoload)
 
 ---
@@ -35,7 +37,7 @@ Karibu Technologies est un groupe technologique fonde par BRYCE, base a Abidjan,
 ## Architecture Clean / Hexagonal
 
 ### Regles 13 (valides par BRYCE)
-1. Organisation feature-first (Auth, Tenancy, Common)
+1. Organisation feature-first (Auth, Tenancy, Common, Cms)
 2. Domain = PHP pur (pas de Laravel)
 3. Controllers = thin (validation + DTO + Use Case)
 4. Pas de Eloquent dans les vues
@@ -55,7 +57,7 @@ src/Features/{FeatureName}/
 ├── Domain/
 │   ├── Contracts/        # Interfaces (ports)
 │   ├── Entities/         # Entites metier
-│   ├── ValueObjects/     # Valeurs原子iques
+│   ├── ValueObjects/     # Valeurs atomiques
 │   ├── Rules/            # Regles metier pures
 │   └── Events/           # Evenements domaine
 ├── Application/
@@ -70,61 +72,9 @@ src/Features/{FeatureName}/
 ```
 
 ### Features existantes
-- **Auth** : Login, Register, Logout, ForgotPassword, ResetPassword
+- **Auth** : Login, Register, Logout, ForgotPassword, ResetPassword (27 fichiers)
 - **Common** : Email (VO), Money (VO), IsActiveUser (Rule), UserRepositoryInterface (Contract)
-
----
-
-## Etat d'avancement — Session 2 (2026-09-09)
-
-### Fichiers crees/modifies (Session 1 + 2)
-- `docker-compose.yml` — 6 services: app, nginx, mysql, redis, queue, scheduler
-- `Dockerfile` — PHP 8.4 FPM Alpine
-- `docker/nginx/default.conf` — Config Nginx dev
-- `app/Enums/Role.php` — 5 roles SaaS
-- `app/Enums/TenantPlan.php` — 4 plans
-- `app/Models/Tenant.php` — Modele tenant
-- `app/Models/User.php` — Modele user (sans HasApiTokens — Sanctum pas installe)
-- `app/Traits/BelongsToTenant.php` — Scope tenant
-- `app/Http/Middleware/TenantMiddleware.php` — Abort 401 (pas global)
-- `app/Http/Middleware/EnsureUserHasRole.php` — Middleware roles
-- `app/Providers/AppServiceProvider.php` — DI: UserRepositoryInterface → EloquentUserRepository
-- `app/Http/Controllers/LandingController.php`
-- `app/Http/Controllers/Tenant/DashboardController.php`
-- `src/Features/Auth/` — Feature complete (27 fichiers)
-- `src/Features/Common/` — Value Objects + Rule (3 fichiers)
-- `resources/views/auth/` — 4 vues (login, register, forgot-password, reset-password)
-- `resources/views/components/ui/` — 5 composants (button, input, card, alert, badge)
-- `resources/views/components/layouts/` — 2 layouts (guest, app)
-- `resources/views/landing.blade.php` — Landing page PWA (536 lignes)
-- `resources/views/tenant/dashboard.blade.php`
-- `database/migrations/` — 4 migrations (tenants, users, cache, jobs)
-- `database/seeders/SuperAdminSeeder.php` — admin@karibu.tech / Admin@2026!
-- `database/baremes/cnps_2026.json` — Taux CNPS
-- `database/baremes/its_2026.json` — Barème ITS
-- `routes/web.php` — Landing + Auth + Dashboard
-- `tests/` — 9 fichiers (3 Feature Auth + 3 Unit + 2 Example + TestCase)
-
-### Tests
-- **36 tests, 60 assertions — TOUS PASSENT**
-- Unit: EmailTest (7), MoneyTest (10), IsActiveUserTest (4), ExampleTest (1)
-- Feature: LoginTest (4), RegisterTest (4), LogoutTest (1), ExampleTest (1)
-
-### Bugs corriges (Session 2)
-1. `HasApiTokens` (Sanctum) non installe → trait retire temporairement
-2. `view()` recevait un objet ViewModel au lieu d'un array → ViewModels implementent `Arrayable`
-3. `:disabled="loading"` → constante PHP, pas variable Alpine → supprimé
-4. `UserDTO.tenant_id` inexistant → fallback Eloquent supprimé dans redirectAfterLogin
-
-### Etat Docker local
-| Service | Container | Port |
-|---------|-----------|------|
-| app | karibu-app | — |
-| nginx | karibu-nginx | 8081→80 |
-| mysql | karibu-mysql | 3307→3306 |
-| redis | karibu-redis | 6380→6379 |
-| queue | karibu-queue | — |
-| scheduler | karibu-scheduler | — |
+- **Cms** : 6 tables, 6 modeles, 4 contrats, 2 VO, 4 repositories, 4 actions
 
 ---
 
@@ -136,82 +86,106 @@ src/Features/{FeatureName}/
 | OS | Ubuntu 24.04.4 LTS |
 | RAM | 12GB |
 | Disk | 300GB (276GB dispo) |
-| PHP | 8.3.6 (host) |
+| PHP | 8.4.x (Docker) |
 | Docker | v29.x + Compose v5.5.0 |
-| Nginx | Serveur proxy + VTC (karibu.co.ci) |
+| Nginx | Proxy + SSL + VTC (karibu.co.ci) |
 | Cockpit | Port 9091 (admin VPS) |
-| SSH | Key: `C:\Users\WEBDEV\.ssh\id_ed25519_karibu` |
-| Login SSH | root / Genetycs@%0703! |
-| Login Cockpit | karibuadmin / NouveauMdp2026! |
+| SSH | Port 22, Key: `C:\Users\WEBDEV\.ssh\id_ed25519_karibu` |
+| Login SSH | root |
+| Deploy Key | `/root/.ssh/deploy_key` (GitHub Actions) |
 
 ### Services VPS actifs
-- Nginx (80, 443, 83, 84, 483, 8000, 8001, 8080, 8443, 8888)
-- PostgreSQL (5432)
-- Redis (6379)
-- Docker: karibu-backend, karibu-nginx, karibu-postgres, karibu-redis, karibu-reverb, karibu-minio, karibu-mailpit (VTC)
-- Monitoring: Grafana (3000), Prometheus (9090), Uptime Kuma (3001), Loki (3100)
-- Mail: Postfix + Dovecot + LDAP (slapd)
-- Cockpit (9091)
+- Docker: karibu-app, karibu-nginx, karibu-mysql, karibu-redis
+- Nginx (80, 443) + SSL Let's Encrypt
+- Redis (6379), MySQL (3308→3306)
 
 ### SSL (Let's Encrypt)
 - `karibu.co.ci` + `www.karibu.co.ci` — expire 2026-11-21
 - `klnk.karibu.co.ci` — expire 2026-12-06
-- **tech.karibu.co.ci** — DNS OK (A record → 169.58.220.27), cert a creer
-
-### Nginx VPS
-- `/etc/nginx/sites-available/karibu` → karibu.co.ci (VTC)
-- `/etc/nginx/sites-available/default` — default server
+- **tech.karibu.co.ci** — SSL actif, deploye
 
 ---
 
 ## Routes actuelles
 
-| Method | Path | Name | Middleware |
-|--------|------|------|------------|
-| GET | / | landing | — |
-| GET | /login | login | guest |
-| POST | /login | — | guest |
-| GET | /register | register | guest |
-| POST | /register | — | guest |
-| GET | /forgot-password | password.request | guest |
-| POST | /forgot-password | password.email | guest |
-| GET | /reset-password/{token} | password.reset | guest |
-| POST | /reset-password | password.update | guest |
-| POST | /logout | logout | auth |
-| GET | /dashboard | dashboard | auth+tenant |
-| GET | /{slug}/dashboard | tenant.dashboard | auth+tenant |
+### Publiques
+| Method | Path | Name |
+|--------|------|------|
+| GET | / | landing (CMS home) |
+| GET | /tarifs | pricing |
+| GET | /checkout | checkout.index |
+| POST | /checkout | checkout.store |
+| GET | /demo | demo.index |
+| POST | /demo | demo.store |
+| GET | /demo/merci | demo.success |
+| POST | /form/{type} | cms.form.store |
+| GET | /subscription/expired | subscription.expired |
+| GET | /subscription/blocked | subscription.blocked |
+| GET | /{slug} | cms.page (catch-all, APRÈS toutes les routes) |
 
-### Routes a deplacer (Etape 2)
-Auth → /orion/* (paths caches, names identiques)
+### Auth (guest) — /orion/*
+| Method | Path | Name |
+|--------|------|------|
+| GET | /orion/login | login |
+| POST | /orion/login | — |
+| GET | /orion/register | register |
+| POST | /orion/register | — |
+| GET | /orion/forgot-password | password.request |
+| POST | /orion/forgot-password | password.email |
+| GET | /orion/reset-password/{token} | password.reset |
+| POST | /orion/reset-password | password.update |
+| POST | /orion/logout | logout |
+
+### Auth (authenticated)
+| Method | Path | Name |
+|--------|------|------|
+| GET | /dashboard | dashboard |
+| GET | /{slug}/dashboard | tenant.dashboard |
+
+### Admin (super_admin) — /orion/admin/*
+| Method | Path | Name |
+|--------|------|------|
+| GET | /orion/admin/plans | plans.index |
+| GET | /orion/admin/plans/{plan}/edit | plans.edit |
+| PUT | /orion/admin/plans/{plan} | plans.update |
+| POST | /orion/admin/plans/{plan}/toggle | plans.toggle |
+| GET | /orion/admin/tenants | tenants.index |
+| GET | /orion/admin/tenants/{tenant} | tenants.show |
+| PATCH | /orion/admin/tenants/{tenant}/status | tenants.status |
+| POST | /orion/admin/tenants/{tenant}/payment | tenants.payment |
+| GET | /orion/admin/cms | cms.dashboard |
+| GET | /orion/admin/cms/pages | cms.pages.index |
+| POST | /orion/admin/cms/pages | cms.pages.store |
+| GET | /orion/admin/cms/pages/{page} | cms.pages.show |
+| PUT | /orion/admin/cms/pages/{page} | cms.pages.update |
+| DELETE | /orion/admin/cms/pages/{page} | cms.pages.destroy |
+| POST | /orion/admin/cms/pages/{page}/sections | cms.pages.sections.store |
+| PUT | /orion/admin/cms/pages/{page}/sections/{section} | cms.pages.sections.update |
+| DELETE | /orion/admin/cms/pages/{page}/sections/{section} | cms.pages.sections.destroy |
+| GET | /orion/admin/cms/settings | cms.settings.index |
+| PUT | /orion/admin/cms/settings | cms.settings.update |
+| GET | /orion/admin/cms/navigation | cms.navigation.index |
+| PUT | /orion/admin/cms/navigation | cms.navigation.update |
+| GET | /orion/admin/cms/media | cms.media.index |
+| POST | /orion/admin/cms/media | cms.media.store |
+| DELETE | /orion/admin/cms/media/{media} | cms.media.destroy |
+| GET | /orion/admin/cms/forms | cms.forms.index |
+| GET | /orion/admin/cms/forms/{submission} | cms.forms.show |
+| PATCH | /orion/admin/cms/forms/{submission}/read | cms.forms.read |
+| DELETE | /orion/admin/cms/forms/{submission} | cms.forms.destroy |
 
 ---
 
 ## Conventions
 
-- **Tables** prefixees : `crm_` / `compta_` / `rh_` (Karibu Paie: `karibu_`)
+- **Tables** prefixees : `crm_` / `compta_` / `rh_` (Karibu Paie: `karibu_`, CMS: `cms_`)
 - **Monetaire** : XOF (FCFA), integer jamais float
 - **Langue** : Francais uniquement
 - **Timezone** : Africa/Abidjan
 - **Soft deletes** : sur tous les modeles
-- **Variable interdite** : $sage (conflit Sage/Saari)
-- **Login URL** : /orion/login (apres Etape 2)
+- **Login URL** : /orion/login
 - **Session timeout** : 7200s (2h)
-
----
-
-## Decisions importantes
-
-| Decision | Raison |
-|----------|--------|
-| Architecture Shared DB + tenant_id | Simple, pas cher, suffisant pour 200 clients |
-| Redis des le jour 1 | Cache + queue + sessions, $0 de surcout |
-| Laravel 13 | Derniere version, support jusqu'en 2028 |
-| PHP 8.4 | Requis par composer.json ^8.4 |
-| Clean Architecture / Hexagonal | Domain PHP pur, testable, maintenable |
-| Routes auth dans /orion/ | Seguridad — paths non devinables |
-| ViewModels implementent Arrayable | Compatibilite avec view() Laravel |
-| TenantMiddleware → abort 401 | Pas de redirect, compatible API |
-| Pas de Sanctum pour l'instant | API Flutter phase ulterieure |
+- **Cache Redis** : pages CMS (5min), settings (30min), navigation (1h)
 
 ---
 
@@ -221,27 +195,45 @@ Auth → /orion/* (paths caches, names identiques)
 - .env.production.example (gitignore le vrai .env)
 - BelongsToTenant scope sur tous les modeles
 - Roles avec hierarchie
-- Routes auth dans /orion/ (pas /login)
-- root bloque dans Cockpit disallowed-users
+- Routes auth dans /orion/ (paths non devinables)
+- PreventBrowserCache middleware (no-store sur pages auth)
+- Service Worker ne cache PAS les pages /orion/* et /dashboard
+- Meta Cache-Control no-cache dans le head admin
+- Anti-inspection login (right-click, F12, DevTools desactives)
+- Deploy key SSH pour GitHub Actions
 
 ---
 
 ## Prochaines etapes
 
-| # | Tache | Statut |
-|---|-------|--------|
-| 1 | Deploy landing tech.karibu.co.ci | FAIT |
-| 2 | Routes Auth → /orion/ | FAIT |
-| 3 | Config Nginx + SSL sur VPS | FAIT |
-| 4 | Tests Phase 1 (36 tests / 60 assertions) | FAIT |
-| 5 | Systeme abonnements (plans, checkout, admin) | FAIT |
-| 6 | Page /tarifs + /checkout + /demo | FAIT |
-| 7 | Middleware VerifySubscription | FAIT |
-| 8 | Command cron subscriptions:check | FAIT |
-| 9 | Module Paie (CNPS + ITS) | A FAIRE |
-| 10 | API Flutter (Sanctum) | A FAIRE |
-| 11 | Mobile Money / Stripe | A FAIRE |
-| 12 | CI/CD GitHub Actions | A FAIRE |
+| # | Tache | Statut | Session |
+|---|-------|--------|---------|
+| 1 | Deploy landing tech.karibu.co.ci | FAIT | S1-S2 |
+| 2 | Routes Auth → /orion/ | FAIT | S2 |
+| 3 | Config Nginx + SSL sur VPS | FAIT | S2 |
+| 4 | Tests Phase 1 (36 tests / 60 assertions) | FAIT | S2 |
+| 5 | Systeme abonnements (plans, checkout, admin) | FAIT | S3 |
+| 6 | Page /tarifs + /checkout + /demo | FAIT | S3 |
+| 7 | Middleware VerifySubscription | FAIT | S3 |
+| 8 | Command cron subscriptions:check | FAIT | S3 |
+| 9 | Module CMS complet (tables, controllers, vues, seeder) | FAIT | S4 |
+| 10 | CI/CD GitHub Actions (deploy.yml) | FAIT | S5 |
+| 11 | Fix SSH port 22 (pas 5022) | FAIT | S5 |
+| 12 | Deploy key GitHub Actions | FAIT | S5 |
+| 13 | Design system + favicon + couleurs royal-600 | FAIT | S5 |
+| 14 | Dashboard sidebar + stats + accès rapides | FAIT | S5 |
+| 15 | Fix sidebar lg:static double-offset | FAIT | S6 |
+| 16 | Fix browser cache (SW + middleware + meta) | FAIT | S7 |
+| 17 | Redesign UI/UX backend (sidebar dark, cards, animations) | FAIT | S7 |
+| 18 | Fix JSON editor modal (Alpine.js) | FAIT | S7 |
+| 19 | Fix page creation modal (Alpine.js) | FAIT | S7 |
+| 20 | **Module Paie (CNPS + ITS)** | A FAIRE | S8 |
+| 21 | **API Flutter (Sanctum)** | A FAIRE | — |
+| 22 | **Mobile Money / Stripe** | A FAIRE | — |
+| 23 | **Tests RH + Régie Pub** | A FAIRE | — |
+| 24 | **Docker Compose + installateur client** | A FAIRE | — |
+| 25 | **WebSocket Reverb (temps réel)** | A FAIRE | — |
+| 26 | **Licence JWT (Self-Hosted SaaS)** | A FAIRE | — |
 
 ---
 
@@ -301,3 +293,59 @@ Auth → /orion/* (paths caches, names identiques)
 - Fix: stale Redis cache (CmsPage incomplet)
 - 36 tests / 60 assertions — tous passent
 - Deploy complet VPS
+
+### Session 5 — 2026-09-10 (CI/CD + UI)
+- **GitHub repo** cree: `https://github.com/DamiahnVint/karibu-saas` (public)
+- **CI/CD GitHub Actions** : `.github/workflows/deploy.yml` — push to main → SSH VPS → git pull + artisan cache
+- **Deploy key** SSH generee sur VPS (`/root/.ssh/deploy_key`)
+- **Guide de deploiement** : `C:\Users\WEBDEV\Documents\DEPLOYMENT_GUIDE.md`
+- **SSH Port**: 22 (PAS 5022 comme indiqué dans CONTEXT.md)
+- **APP_KEY** generee sur VPS
+- **Premier commit + push** : 161 fichiers → GitHub
+- **Design system** mis a jour : couleurs royal-600 partout (remplacement indigo)
+- **Favicon** : SVG + PNGs (32, 180, 192, 512px) deployes dans tous les layouts
+- **Dashboard** : sidebar navigation complete avec role-based links, stats reelles, accès rapides, guide demarrage
+- **Fix role enum** : `Role::tryFrom()` au lieu de `->label()` sur string
+
+### Session 6 — 2026-09-11 (Bug fix layout)
+- **Bug sidebar double-offset** : le `lg:static` sur le sidebar + `lg:pl-72` sur le contenu creait un double decalage
+- **Fix** : Suppression `lg:static lg:z-auto` du sidebar — reste `fixed` sur tous les ecrans
+- **Deploy** : commit `27d5d14`, VPS mis a jour
+
+### Session 7 — 2026-09-11 (Cache fix + Redesign UI/UX + CMS bugs)
+- **Bug cache navigateur** : Le browser servait une ancienne version du dashboard (PJ1 vs PJ2 apres Ctrl+Shift+R)
+- **Cause** : Service Worker cachait les pages `/orion/*` et `/dashboard`
+- **Fix SW** : `public/sw.js` — les routes auth ne sont plus mises en cache (fallback "reconnectez-vous")
+- **Fix middleware** : `PreventBrowserCache` — headers `Cache-Control: no-store` sur pages auth
+- **Fix meta** : `no-cache, no-store, must-revalidate` dans le `<head>` admin
+- **Redesign UI/UX backend** complet :
+  - Sidebar dark gradient (gray-950 → royal-950) avec glow actif
+  - Dashboard hero header gradient, stats avec icones colorees + hover lift
+  - Toutes les vues admin redesignees (CMS, Plans, Tenants, Forms, Media, Settings)
+  - Composants UI mis a jour (bouton gradient, card hover, badge ring, alert icons)
+  - Animations: fadeInUp, hover scale, transitions 200ms
+  - Layout: topbar desktop avec breadcrumbs, user footer dark
+  - 23 fichiers modifies, 866 insertions, 601 suppressions
+- **Fix JSON editor** : Le bouton "Editer le JSON" ne faisait rien (no-op JS)
+  - Remplacement par modal Alpine.js complet : textarea sur fond sombre, validation temps reel, formater, tab, Escape
+- **Fix page creation modal** : `classList.remove('hidden')` vanilla JS conflict avec Alpine.js
+  - Remplacement par `showModal` Alpine.js avec `x-show` + `x-transition`
+- **Commits** : `af3d1a9` (cache fix), `0385073` (redesign + cache fix), `2256483` (JSON/modal fix)
+
+---
+
+## Bugs connus / a surveiller
+- Le dashboard (PJ1) montrait un ancien layout avant Ctrl+Shift+R — RESOLU (cache fix)
+- `@apply` dans `<style>` inline n'est pas fiable avec Tailwind CDN — RESOLU (CSS brut)
+- `lg:static` sur sidebar creait un double-offset — RESOLU
+- `view()` ne supporte pas les objets Eloquent → utiliser `->toArray()` ou arrays
+- `auth()->user()->role` est un string, PAS un enum → utiliser `Role::tryFrom()`
+
+---
+
+## Donnees de test
+- **Admin super**: `admin@karibu.tech` / `Admin@2026!`
+- **Plans par defaut** (via PlanSeeder): Essentiel 20K, Pro 35K, Enterprise, Trial
+- **CMS pages** (via CmsSeeder): landing, pricing, demo, contact
+- **Local dev**: `http://127.0.0.1:8081` (Nginx Docker)
+- **Production**: `https://tech.karibu.co.ci`
