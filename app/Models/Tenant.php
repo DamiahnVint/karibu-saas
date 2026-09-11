@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\TenantPlan;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
@@ -23,6 +25,10 @@ class Tenant extends Model
         'max_employees',
         'settings',
         'metadata',
+        'subscription_status',
+        'trial_ends_at',
+        'subscription_ends_at',
+        'last_payment_at',
     ];
 
     protected $casts = [
@@ -32,6 +38,9 @@ class Tenant extends Model
         'max_employees' => 'integer',
         'settings' => 'array',
         'metadata' => 'array',
+        'trial_ends_at' => 'datetime',
+        'subscription_ends_at' => 'datetime',
+        'last_payment_at' => 'datetime',
     ];
 
     public function users(): HasMany
@@ -49,10 +58,57 @@ class Tenant extends Model
         return $this->hasMany(Payslip::class);
     }
 
+    public function planModel(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'plan_id');
+    }
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
+
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->where('status', 'active')->latestOfMany();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function isActive(): bool
     {
-        return $this->is_active
-            && ($this->plan_expires_at === null || $this->plan_expires_at->isFuture());
+        if (!$this->is_active) {
+            return false;
+        }
+
+        if ($this->subscription_status === 'active') {
+            return true;
+        }
+
+        if ($this->subscription_status === 'trialing' && $this->trial_ends_at?->isFuture()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isTrialing(): bool
+    {
+        return $this->subscription_status === 'trialing'
+            && $this->trial_ends_at?->isFuture();
+    }
+
+    public function hasAccess(): bool
+    {
+        return $this->isActive() || $this->isTrialing();
     }
 
     public function isPlanValid(): bool
@@ -66,6 +122,15 @@ class Tenant extends Model
     public function canAddEmployee(): bool
     {
         return $this->employees()->count() < $this->max_employees;
+    }
+
+    public function trialDaysRemaining(): int
+    {
+        if (!$this->isTrialing()) {
+            return 0;
+        }
+
+        return max(0, now()->diffInDays($this->trial_ends_at, false));
     }
 
     public static function findByDomain(string $domain): ?static

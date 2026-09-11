@@ -1,28 +1,49 @@
-*.log
-.DS_Store
+# Dépendances
+/vendor
+/node_modules
+
+# Environnement
 .env
 .env.backup
 .env.production
 .env.docker
-.phpactor.json
+.env.deploy
+.deploy.env
+
+# Logs
+*.log
+/storage/logs/*
+
+# Cache
+/storage/framework/views/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/.phpunit.cache
+/.phpactor.json
 .phpunit.result.cache
-/.codex
+
+# IDE
 /.cursor/
 /.idea
 /.nova
-/.phpunit.cache
 /.vscode
 /.zed
-/auth.json
-/node_modules
+/.codex
+_ide_helper.php
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel
 /public/build
-/public/fonts-manifest.dev.json
 /public/hot
 /public/storage
-/storage/*.key
 /storage/pail
-/vendor
-_ide_helper.php
+/storage/*.key
+/auth.json
 Homestead.json
 Homestead.yaml
-Thumbs.db
+
+# Fichiers générés
+/public/icons/icon-maskable.png
