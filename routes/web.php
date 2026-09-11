@@ -99,6 +99,69 @@ Route::post('/orion/logout', [AuthController::class, 'logout'])
 Route::middleware(['auth', 'subscription'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/{slug}/dashboard', [DashboardController::class, 'index'])->name('tenant.dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routes Module Paie — auth + subscription
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('paie')->name('paie.')->group(function () {
+        // Dashboard
+        Route::get('/', [\Src\Features\Paie\Presentation\Http\PaieDashboardController::class, 'index'])->name('dashboard');
+
+        // Simulateur
+        Route::get('/simulateur', function () {
+            return view('paie.simulateur');
+        })->name('simulateur');
+        Route::post('/simulateur', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'simulate'])->name('simulateur.run');
+
+        // Employés
+        Route::get('/employes', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('/employes/creer', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'create'])->name('employees.create');
+        Route::post('/employes', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'store'])->name('employees.store');
+        Route::get('/employes/{id}', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'show'])->name('employees.show');
+        Route::put('/employes/{id}', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'update'])->name('employees.update');
+        Route::delete('/employes/{id}', [\Src\Features\Paie\Presentation\Http\EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+        // Bulletins
+        Route::get('/bulletins', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'index'])->name('payslips.index');
+        Route::get('/bulletins/creer', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'create'])->name('payslips.create');
+        Route::post('/bulletins', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'store'])->name('payslips.store');
+        Route::get('/bulletins/{id}', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'show'])->name('payslips.show');
+        Route::post('/bulletins/{id}/valider', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'validate'])->name('payslips.validate');
+        Route::delete('/bulletins/{id}', [\Src\Features\Paie\Presentation\Http\PayslipController::class, 'destroy'])->name('payslips.destroy');
+
+        // Congés
+        Route::get('/conges', [\Src\Features\Paie\Presentation\Http\LeaveController::class, 'index'])->name('leaves.index');
+        Route::get('/conges/creer', [\Src\Features\Paie\Presentation\Http\LeaveController::class, 'create'])->name('leaves.create');
+        Route::post('/conges', [\Src\Features\Paie\Presentation\Http\LeaveController::class, 'store'])->name('leaves.store');
+        Route::post('/conges/{id}/approuver', [\Src\Features\Paie\Presentation\Http\LeaveController::class, 'approve'])->name('leaves.approve');
+        Route::delete('/conges/{id}', [\Src\Features\Paie\Presentation\Http\LeaveController::class, 'destroy'])->name('leaves.destroy');
+
+        // Timesheets
+        Route::get('/feuilles-temps', [\Src\Features\Paie\Presentation\Http\TimesheetController::class, 'index'])->name('timesheets.index');
+        Route::get('/feuilles-temps/creer', [\Src\Features\Paie\Presentation\Http\TimesheetController::class, 'create'])->name('timesheets.create');
+        Route::post('/feuilles-temps', [\Src\Features\Paie\Presentation\Http\TimesheetController::class, 'store'])->name('timesheets.store');
+        Route::delete('/feuilles-temps/{id}', [\Src\Features\Paie\Presentation\Http\TimesheetController::class, 'destroy'])->name('timesheets.destroy');
+
+        // Notes de frais
+        Route::get('/frais', [\Src\Features\Paie\Presentation\Http\ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('/frais/creer', [\Src\Features\Paie\Presentation\Http\ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/frais', [\Src\Features\Paie\Presentation\Http\ExpenseController::class, 'store'])->name('expenses.store');
+        Route::post('/frais/{id}/approuver', [\Src\Features\Paie\Presentation\Http\ExpenseController::class, 'approve'])->name('expenses.approve');
+        Route::delete('/frais/{id}', [\Src\Features\Paie\Presentation\Http\ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+        // Départements
+        Route::get('/departements', [\Src\Features\Paie\Presentation\Http\DepartmentController::class, 'index'])->name('departments.index');
+        Route::post('/departements', [\Src\Features\Paie\Presentation\Http\DepartmentController::class, 'store'])->name('departments.store');
+        Route::put('/departements/{id}', [\Src\Features\Paie\Presentation\Http\DepartmentController::class, 'update'])->name('departments.update');
+        Route::delete('/departements/{id}', [\Src\Features\Paie\Presentation\Http\DepartmentController::class, 'destroy'])->name('departments.destroy');
+
+        // Déclarations
+        Route::get('/declarations', [\Src\Features\Paie\Presentation\Http\DeclarationController::class, 'index'])->name('declarations.index');
+        Route::get('/declarations/cnps', [\Src\Features\Paie\Presentation\Http\DeclarationController::class, 'cnps'])->name('declarations.cnps');
+        Route::get('/declarations/its', [\Src\Features\Paie\Presentation\Http\DeclarationController::class, 'its'])->name('declarations.its');
+    });
 });
 
 /*

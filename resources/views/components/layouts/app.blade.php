@@ -174,14 +174,29 @@
             </div>
             @endif
 
-            {{-- Module Paie (tous les rôles) --}}
+            {{-- Module Paie --}}
             <div>
                 <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">Module</div>
-                <div class="sidebar-link opacity-40 cursor-not-allowed">
+                <a href="{{ route('paie.dashboard') }}" class="sidebar-link {{ request()->routeIs('paie.*') ? 'sidebar-link-active' : '' }}">
                     <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <span>Paie</span>
-                    <span class="ml-auto text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Bientôt</span>
-                </div>
+                </a>
+                <a href="{{ route('paie.employees.index') }}" class="sidebar-link {{ request()->routeIs('paie.employees.*') ? 'sidebar-link-active' : '' }}">
+                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    <span>Employés</span>
+                </a>
+                <a href="{{ route('paie.payslips.index') }}" class="sidebar-link {{ request()->routeIs('paie.payslips.*') ? 'sidebar-link-active' : '' }}">
+                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    <span>Bulletins</span>
+                </a>
+                <a href="{{ route('paie.leaves.index') }}" class="sidebar-link {{ request()->routeIs('paie.leaves.*') ? 'sidebar-link-active' : '' }}">
+                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>Congés</span>
+                </a>
+                <a href="{{ route('paie.declarations.index') }}" class="sidebar-link {{ request()->routeIs('paie.declarations.*') ? 'sidebar-link-active' : '' }}">
+                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Déclarations</span>
+                </a>
             </div>
         </nav>
 
