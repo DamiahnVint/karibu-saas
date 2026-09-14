@@ -15,7 +15,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $repository = new EloquentEmployeeRepository();
         $employees = $repository->paginated($tenantId, $request->only(['search', 'statut', 'department_id']), 15);
@@ -26,7 +26,7 @@ class EmployeeController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $departments = Department::where('tenant_id', $tenantId)->orderBy('name')->get();
 
         return view('paie.employees.create', compact('departments'));
@@ -57,7 +57,7 @@ class EmployeeController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $dto = StoreEmployeeDTO::fromarray(array_merge($validated, ['tenant_id' => $request->user()->tenant_id]));
+        $dto = StoreEmployeeDTO::fromarray(array_merge($validated, ['tenant_id' => (int) $request->user()->tenant_id]));
 
         $action = new StoreEmployeeAction(new EloquentEmployeeRepository());
         $employee = $action->execute($dto);
@@ -68,7 +68,7 @@ class EmployeeController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employee = Employee::where('tenant_id', $tenantId)->findOrFail($id);
 
         $employee->load(['department', 'contracts', 'payslips' => function ($q) {
@@ -107,10 +107,10 @@ class EmployeeController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $dto = StoreEmployeeDTO::fromarray(array_merge($validated, ['tenant_id' => $request->user()->tenant_id]));
+        $dto = StoreEmployeeDTO::fromarray(array_merge($validated, ['tenant_id' => (int) $request->user()->tenant_id]));
 
         $action = new UpdateEmployeeAction(new EloquentEmployeeRepository());
-        $employee = $action->execute($id, $request->user()->tenant_id, $dto);
+        $employee = $action->execute($id, (int) $request->user()->tenant_id, $dto);
 
         return redirect()->route('paie.employees.show', $employee->id)
             ->with('success', 'Employé mis à jour avec succès.');
@@ -118,7 +118,7 @@ class EmployeeController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employee = Employee::where('tenant_id', $tenantId)->findOrFail($id);
         $employee->delete();
 

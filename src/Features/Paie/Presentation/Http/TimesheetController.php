@@ -14,7 +14,7 @@ class TimesheetController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $repository = new EloquentTimesheetRepository();
         $timesheets = $repository->paginated($tenantId, $request->only(['employee_id', 'date_from', 'date_to']), 15);
@@ -24,7 +24,7 @@ class TimesheetController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employees = Employee::where('tenant_id', $tenantId)->where('statut', 'actif')->orderBy('nom')->get();
 
         return view('paie.timesheets.create', compact('employees'));
@@ -41,7 +41,7 @@ class TimesheetController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $dto = StoreTimesheetDTO::fromarray(array_merge($validated, ['tenant_id' => $request->user()->tenant_id]));
+        $dto = StoreTimesheetDTO::fromarray(array_merge($validated, ['tenant_id' => (int) $request->user()->tenant_id]));
 
         $action = new StoreTimesheetAction(new EloquentTimesheetRepository());
         $timesheet = $action->execute($dto);
@@ -52,7 +52,7 @@ class TimesheetController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $timesheet = Timesheet::whereHas('employee', fn ($q) => $q->where('tenant_id', $tenantId))->findOrFail($id);
 
         if ($timesheet->statut === 'valide') {

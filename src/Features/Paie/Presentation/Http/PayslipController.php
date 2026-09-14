@@ -16,7 +16,7 @@ class PayslipController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $repository = new EloquentPayslipRepository();
         $payslips = $repository->paginated($tenantId, $request->only(['mois', 'annee', 'statut', 'employee_id']), 15);
@@ -26,7 +26,7 @@ class PayslipController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employees = Employee::where('tenant_id', $tenantId)->where('statut', 'actif')->orderBy('nom')->get();
 
         return view('paie.payslips.create', compact('employees'));
@@ -51,7 +51,7 @@ class PayslipController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $dto = GeneratePayslipDTO::fromarray(array_merge($validated, ['tenant_id' => $request->user()->tenant_id]));
+        $dto = GeneratePayslipDTO::fromarray(array_merge($validated, ['tenant_id' => (int) $request->user()->tenant_id]));
 
         $action = new GeneratePayslipAction(new EloquentPayslipRepository());
         $payslip = $action->execute($dto);
@@ -62,7 +62,7 @@ class PayslipController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $payslip = Payslip::where('tenant_id', $tenantId)->with('employee')->findOrFail($id);
 
         return view('paie.payslips.show', compact('payslip'));
@@ -70,7 +70,7 @@ class PayslipController extends Controller
 
     public function validate(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $action = new ValidatePayslipAction(new EloquentPayslipRepository());
         $payslip = $action->execute($id, $tenantId, $request->user()->id);
@@ -105,7 +105,7 @@ class PayslipController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $payslip = Payslip::where('tenant_id', $tenantId)->findOrFail($id);
 
         if ($payslip->statut !== 'brouillon') {

@@ -10,7 +10,7 @@ class DeclarationController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $mois = (int) ($request->get('mois', now()->month));
         $annee = (int) ($request->get('annee', now()->year));
 
@@ -35,7 +35,7 @@ class DeclarationController extends Controller
 
     public function cnps(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $mois = (int) ($request->get('mois', now()->month));
         $annee = (int) ($request->get('annee', now()->year));
 
@@ -62,7 +62,7 @@ class DeclarationController extends Controller
 
     public function its(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $mois = (int) ($request->get('mois', now()->month));
         $annee = (int) ($request->get('annee', now()->year));
 

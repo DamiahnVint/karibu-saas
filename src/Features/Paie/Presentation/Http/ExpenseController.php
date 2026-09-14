@@ -15,7 +15,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $repository = new EloquentExpenseRepository();
         $expenses = $repository->paginated($tenantId, $request->only(['statut', 'categorie', 'employee_id']), 15);
@@ -25,7 +25,7 @@ class ExpenseController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employees = Employee::where('tenant_id', $tenantId)->where('statut', 'actif')->orderBy('nom')->get();
 
         return view('paie.expenses.create', compact('employees'));
@@ -49,7 +49,7 @@ class ExpenseController extends Controller
 
         $dto = StoreExpenseDTO::fromarray(array_merge(
             $validated,
-            ['tenant_id' => $request->user()->tenant_id, 'justificatif_path' => $justificatifPath]
+            ['tenant_id' => (int) $request->user()->tenant_id, 'justificatif_path' => $justificatifPath]
         ));
 
         $action = new StoreExpenseAction(new EloquentExpenseRepository());
@@ -73,7 +73,7 @@ class ExpenseController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $expense = Expense::whereHas('employee', fn ($q) => $q->where('tenant_id', $tenantId))->findOrFail($id);
 
         if ($expense->statut !== 'en_attente') {

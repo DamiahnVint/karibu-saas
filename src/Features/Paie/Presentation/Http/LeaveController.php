@@ -15,7 +15,7 @@ class LeaveController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
 
         $repository = new EloquentLeaveRepository();
         $leaves = $repository->paginated($tenantId, $request->only(['statut', 'type', 'employee_id']), 15);
@@ -25,7 +25,7 @@ class LeaveController extends Controller
 
     public function create(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $employees = Employee::where('tenant_id', $tenantId)->where('statut', 'actif')->orderBy('nom')->get();
 
         return view('paie.leaves.create', compact('employees'));
@@ -43,7 +43,7 @@ class LeaveController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $dto = StoreLeaveDTO::fromarray(array_merge($validated, ['tenant_id' => $request->user()->tenant_id]));
+        $dto = StoreLeaveDTO::fromarray(array_merge($validated, ['tenant_id' => (int) $request->user()->tenant_id]));
 
         $action = new StoreLeaveAction(new EloquentLeaveRepository());
         $leave = $action->execute($dto);
@@ -66,7 +66,7 @@ class LeaveController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $leave = Leave::whereHas('employee', fn ($q) => $q->where('tenant_id', $tenantId))->findOrFail($id);
 
         if ($leave->statut !== 'en_attente') {

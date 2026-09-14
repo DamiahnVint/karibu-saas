@@ -10,7 +10,7 @@ class DepartmentController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $departments = Department::where('tenant_id', $tenantId)->with('employees')->orderBy('name')->get();
 
         return view('paie.departments.index', compact('departments'));
@@ -25,7 +25,7 @@ class DepartmentController extends Controller
         ]);
 
         $department = new Department();
-        $department->tenant_id = $request->user()->tenant_id;
+        $department->tenant_id = (int) $request->user()->tenant_id;
         $department->name = $validated['name'];
         $department->description = $validated['description'] ?? null;
         $department->parent_id = $validated['parent_id'] ?? null;
@@ -37,7 +37,7 @@ class DepartmentController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $department = Department::where('tenant_id', $tenantId)->findOrFail($id);
 
         $validated = $request->validate([
@@ -55,7 +55,7 @@ class DepartmentController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) $request->user()->tenant_id;
         $department = Department::where('tenant_id', $tenantId)->findOrFail($id);
 
         if ($department->employees()->count() > 0) {

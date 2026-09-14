@@ -13,7 +13,7 @@ class PaieDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        $tenantId = (int) (int) $request->user()->tenant_id;
 
         $totalEmployees = Employee::where('tenant_id', $tenantId)->count();
         $activeEmployees = Employee::where('tenant_id', $tenantId)->where('statut', 'actif')->count();
@@ -52,7 +52,7 @@ class PaieDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('paie.dashboard', compact(
+        return view('paie.dashboard.index', compact(
             'totalEmployees',
             'activeEmployees',
             'payslipsThisMonth',
